@@ -1,6 +1,6 @@
 // Site settings. Claude fills these in at launch.
 window.MF_CONFIG = {
-  SERVER_URL: "",                       // Railway server URL; empty = demo mode (local leaderboard, no payouts)
+  SERVER_URL: "https://mission-failed-production.up.railway.app", // Railway server; empty = demo mode
   CA: "",                               // $FAILED contract address (shows "Coming soon" until set)
   TICKER: "$FAILED",
   X_URL: "https://x.com/missionfailedvi",
