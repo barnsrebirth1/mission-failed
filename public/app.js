@@ -369,6 +369,7 @@ async function finish(kind) {
   $("rTime").textContent = fmtT(clearTicks || s.totalTicks);
   $("rRank").textContent = "…";
   $("rNote").innerHTML = s.cleared ? `You cleared <b>${stars(s.cleared)}</b>. Finish the round in the <b>top 3</b> to get paid.` : "Clear at least one level to get on this round's leaderboard.";
+  if (s.cleared) $("rNote").innerHTML += `<br><b>+${s.cleared} world point${s.cleared > 1 ? "s" : ""}</b> on the world leaderboard.`;
   setTimeout(() => $("results").classList.add("show"), passed ? 1100 : 1900);
   await submit();
 }
@@ -394,6 +395,7 @@ async function submit() {
       if (!res.wallet) note += ` Add your wallet address on the driver screen so you can get paid.`;
       else if (res.eligible === false) note += ` Hold ${$("minHold").textContent} $FAILED by the end of the round to get paid.`;
       else if (res.estimate_sol) note += ` Right now that's about <b>${res.estimate_sol.toFixed(4)} SOL</b>.`;
+      note += `<br><b>+${res.cleared} world point${res.cleared > 1 ? "s" : ""}</b> on the world leaderboard.`;
       $("rNote").innerHTML = note;
     }
     loadState();
@@ -482,6 +484,18 @@ const EXAMPLES = [
   ["leonida_lou", 2, 6, 18900], ["vicecityvet", 1, 5, 14420], ["SK", 0, 5, 15880], ["drift_king", 3, 4, 9120], ["bustedagain", 2, 4, 10310],
   ["keysnotkeys", 0, 3, 6240], ["palmtree", 3, 3, 7030], ["noobdriver", 1, 2, 4100], ["copmagnet", 2, 1, 1650], ["sundown", 3, 1, 1990],
 ].map(([name, char, cleared, clearTicks]) => ({ name, char, cleared, clearTicks, wallet: "", round: currentRound(), example: true }));
+// world: every star cleared = 1 point, summed over all runs
+function worldList(runs) {
+  const by = new Map();
+  for (const e of runs) {
+    if (!(e.cleared > 0)) continue;
+    const k = e.wallet || "n:" + e.name, t = by.get(k) || { name: e.name, wallet: e.wallet || "", char: e.char, points: 0, cleared: 0, clearTicks: 1e9 };
+    t.points += e.example ? e.cleared * (3 + (e.name.length % 5)) : e.cleared;
+    if (e.cleared > t.cleared || (e.cleared === t.cleared && e.clearTicks < t.clearTicks)) { t.cleared = e.cleared; t.clearTicks = e.clearTicks; }
+    by.set(k, t);
+  }
+  return [...by.values()].sort((a, b) => b.points - a.points || b.cleared - a.cleared);
+}
 const avCache = {};
 function avatar(ch) {
   const i = typeof ch === "number" ? ch : Math.max(0, CHARACTERS.findIndex((c) => c.id === ch));
@@ -494,15 +508,15 @@ async function openBoard() {
   $("boardList").innerHTML = `<div class="empty">Loading…</div>`;
   let list = [], meta = "";
   if (DEMO) {
-    list = rankList([...(boardScope === "round" ? localBoard.filter((e) => e.round === currentRound()) : localBoard), ...EXAMPLES]);
+    list = boardScope === "round" ? rankList([...localBoard.filter((e) => e.round === currentRound()), ...EXAMPLES]) : worldList([...localBoard, ...EXAMPLES]);
     meta = "Preview only: example drivers so you can see the layout. The real board starts empty at launch.";
   } else {
-    try { const r = await api("/api/leaderboard?scope=" + boardScope); list = r.rows; meta = boardScope === "round" ? `Round ends in ${$("sTimer").textContent} · top 3 split ${(serverState?.pool_sol || 0).toFixed(3)} SOL · ${r.players || 0} playing` : "Best getaway per driver, all time"; }
+    try { const r = await api("/api/leaderboard?scope=" + (boardScope === "world" ? "world" : "round")); list = r.rows; meta = boardScope === "round" ? `Round ends in ${$("sTimer").textContent} · top 3 split ${(serverState?.pool_sol || 0).toFixed(3)} SOL · ${r.players || 0} playing` : `Every star cleared = 1 point · ${r.drivers || 0} drivers worldwide`; }
     catch (e) { meta = e.message; }
   }
   $("boardMeta").textContent = meta; $("boardMeta").classList.toggle("note", DEMO);
   if (!list.length) { $("boardList").innerHTML = `<div class="empty">Nobody's cleared a level yet. Be the first.</div>`; return; }
-  $("boardList").innerHTML = list.slice(0, 100).map((e, i) => `<div class="lb${(me.wallet && e.wallet === me.wallet) || (!e.wallet && e.name === me.name) ? " me" : ""}"><div class="r">${i + 1}</div><img class="av" src="${avatar(e.char)}" alt=""><div class="nm">${esc(e.name)}${boardScope === "round" && i < 3 ? `<span class="pay">${[50, 30, 20][i]}%</span>` : ""}${e.wallet ? `<small>${short(e.wallet)}</small>` : ""}</div><div class="st">${stars(e.cleared)}</div><div class="tm">${fmtT(e.clearTicks)}</div></div>`).join("");
+  $("boardList").innerHTML = list.slice(0, 100).map((e, i) => `<div class="lb${(me.wallet && e.wallet === me.wallet) || (!e.wallet && e.name === me.name) ? " me" : ""}"><div class="r">${i + 1}</div><img class="av" src="${avatar(e.char)}" alt=""><div class="nm">${esc(e.name)}${boardScope === "round" && i < 3 ? `<span class="pay">${[50, 30, 20][i]}%</span>` : ""}${e.wallet ? `<small>${short(e.wallet)}</small>` : ""}</div><div class="st">${stars(e.cleared)}</div>${boardScope === "world" ? `<div class="ptsv">${e.points}<small>pts</small></div>` : `<div class="tm">${fmtT(e.clearTicks)}</div>`}</div>`).join("");
 }
 const openHow = () => $("howOv").classList.add("show");
 $("howBtn").onclick = openHow; $("howBtn2").onclick = openHow;

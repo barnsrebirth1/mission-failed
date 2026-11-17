@@ -58,3 +58,26 @@ export async function lastRound() {
   if (!db) return [...mem.rounds.values()].pop() || null;
   return must(await db.from("mf_rounds").select("*").order("id", { ascending: false }).limit(1))[0] || null;
 }
+
+// World leaderboard: every star cleared = 1 point, summed over all verified runs.
+export async function worldTotals() {
+  const rows = [];
+  if (!db) rows.push(...[...mem.runs.values()].filter((r) => r.verified && r.cleared > 0));
+  else {
+    for (let page = 0; page < 60; page++) {
+      const chunk = must(await db.from("mf_runs").select("wallet,name,character,cleared,clear_ticks").eq("verified", true).gt("cleared", 0)
+        .order("finished_at", { ascending: true }).range(page * 1000, page * 1000 + 999));
+      rows.push(...chunk);
+      if (chunk.length < 1000) break;
+    }
+  }
+  const by = new Map();
+  for (const r of rows) {
+    const k = r.wallet || "n:" + r.name;
+    const t = by.get(k) || { name: r.name, wallet: r.wallet || "", char: r.character, points: 0, runs: 0, best: 0, bestTicks: 1e9 };
+    t.points += r.cleared; t.runs++; t.name = r.name; t.char = r.character;
+    if (r.cleared > t.best || (r.cleared === t.best && r.clear_ticks < t.bestTicks)) { t.best = r.cleared; t.bestTicks = r.clear_ticks; }
+    by.set(k, t);
+  }
+  return [...by.values()].sort((a, b) => b.points - a.points || b.best - a.best || a.bestTicks - b.bestTicks);
+}

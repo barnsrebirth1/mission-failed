@@ -87,7 +87,8 @@ app.post("/api/run/finish", wrap(async (req, res) => {
   for (const r of runs) { const k = r.wallet || "n:" + r.name; if (!best.has(k)) best.set(k, r); }
   const me = run.wallet || "n:" + run.name;
   const rank = patch.cleared ? [...best.keys()].indexOf(me) + 1 : 0;
-  const out = { cleared: patch.cleared, status: result.status, reason: patch.reason, clearTicks: result.clearTicks, points: POINTS[patch.cleared], rank, wallet: run.wallet, verified: honest };
+  worldCache.at = 0;
+  const out = { world_points_earned: patch.cleared, cleared: patch.cleared, status: result.status, reason: patch.reason, clearTicks: result.clearTicks, points: POINTS[patch.cleared], rank, wallet: run.wallet, verified: honest };
   if (run.wallet && patch.cleared && ENV.FAILED_MINT && connection) {
     try {
       const bal = await tokenBalance(run.wallet, ENV.FAILED_MINT);
@@ -112,9 +113,15 @@ function bestPerDriver(rows) {
   for (const r of rows) { const k = r.wallet || "n:" + r.name; if (seen.has(k)) continue; seen.add(k); out.push({ name: r.name, wallet: r.wallet || "", cleared: r.cleared, clearTicks: r.clear_ticks, char: r.character }); }
   return out;
 }
+let worldCache = { at: 0, v: null };
+async function world() { if (worldCache.v && Date.now() - worldCache.at < 30_000) return worldCache.v; worldCache = { at: Date.now(), v: await DB.worldTotals() }; return worldCache.v; }
 let boardCache = { at: 0, key: "", v: null };
 app.get("/api/leaderboard", wrap(async (req, res) => {
-  const scope = req.query.scope === "all" ? "all" : "round", round = roundOf(), key = scope + round;
+  if (req.query.scope === "world" || req.query.scope === "all") {
+    const w = await world();
+    return res.json({ scope: "world", rows: w.slice(0, 100).map((t) => ({ name: t.name, wallet: t.wallet, char: t.char, points: t.points, runs: t.runs, cleared: t.best, clearTicks: t.bestTicks })), drivers: w.length });
+  }
+  const scope = "round", round = roundOf(), key = scope + round;
   if (boardCache.key === key && Date.now() - boardCache.at < 4000) return res.json(boardCache.v);
   const rows = bestPerDriver(await DB.scoredRuns(scope === "all" ? null : round)).slice(0, 100);
   const v = { scope, round, endsAt: roundEnds(round), rows, players: await DB.playersInRound(round) };
