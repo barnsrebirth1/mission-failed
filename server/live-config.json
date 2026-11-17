@@ -1,0 +1,5 @@
+{
+  "_note": "Non-secret live switches. These override Railway Variables. Claude edits this file via GitHub; Railway redeploys automatically.",
+  "FAILED_MINT": "",
+  "DRY_RUN": true
+}

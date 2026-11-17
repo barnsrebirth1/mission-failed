@@ -1,0 +1,21 @@
+{
+  "name": "mission-failed",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mission Failed server (Railway runs this from the repo root)",
+  "engines": { "node": "22.x" },
+  "scripts": { "start": "node server/index.js" },
+  "dependencies": {
+    "@pump-fun/pump-sdk": "4.3.1",
+    "@solana/spl-token": "^0.4.13",
+    "@solana/web3.js": "^1.98.2",
+    "@supabase/supabase-js": "^2.45.0",
+    "bn.js": "^5.2.2",
+    "bs58": "^6.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "tweetnacl": "^1.0.3",
+    "ws": "^8.18.0"
+  }
+}

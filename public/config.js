@@ -1,0 +1,10 @@
+// Site settings. Claude fills these in at launch.
+window.MF_CONFIG = {
+  SERVER_URL: "",                       // Railway server URL; empty = demo mode (local leaderboard, no payouts)
+  CA: "",                               // $FAILED contract address (shows "Coming soon" until set)
+  TICKER: "$FAILED",
+  X_URL: "https://x.com/missionfailedvi",
+  SITE_URL: "https://missionfailed.app",
+  MIN_HOLD: 500000,                     // $FAILED needed to earn
+  ROUND_MINUTES: 10,
+};

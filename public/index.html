@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Mission Failed — $FAILED</title>
+<meta name="description" content="GTA 6 drops Thursday. Your getaway starts now. Escape the cops, get paid every 10 minutes.">
+<meta name="theme-color" content="#140f22">
+<meta property="og:title" content="Mission Failed — $FAILED">
+<meta property="og:description" content="GTA 6 drops Thursday. Your getaway starts now. Escape the cops, get paid every 10 minutes.">
+<meta property="og:image" content="assets/banner.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="intro" class="intro">
+  <div class="introBand"><div class="pd introTitle">mission failed</div><div class="introSub">Loading Leonida…</div><div class="introBar"><i></i></div></div>
+</div>
+
+<!-- ============ TITLE ============ -->
+<section id="title" class="screen show">
+  <div class="sky"></div>
+  <header class="top">
+    <div class="brand"><span class="pd">mission failed</span><span class="tick">$FAILED</span></div>
+    <div class="topr">
+      <a id="xlink" class="chip" target="_blank" rel="noopener">𝕏</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <h1 class="pd logo">mission<br>failed</h1>
+    <p class="tag">GTA 6 drops Thursday. Your getaway starts now.<br><b>Escape the cops. Get paid every 10 minutes.</b></p>
+    <div class="cta">
+      <button id="playBtn" class="btn big">Play</button>
+      <button id="howBtn" class="btn ghost">How to play</button>
+      <button id="boardBtn" class="btn ghost">Leaderboard</button>
+    </div>
+    <button id="caPill" class="ca"><span class="lbl">CA</span><span id="caText">Coming soon</span><span class="copy">Copy</span></button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Next payout</div><div class="v" id="sTimer">5:00</div></div>
+    <div class="stat"><div class="k">Prize pool</div><div class="v" id="sPool">0.000 SOL</div></div>
+    <div class="stat"><div class="k">Paid to players</div><div class="v" id="sPaid">0.000 SOL</div></div>
+    <div class="stat"><div class="k">Drivers this round</div><div class="v" id="sPlayers">0</div></div>
+  </div>
+
+  <div class="how">
+    <div class="step"><div class="n">1</div><div><b>Pick your driver</b><span>Choose your character, car colour and name. Add your wallet address to get paid: type it in, or connect if you prefer.</span></div></div>
+    <div class="step"><div class="n">2</div><div><b>Escape the cops</b><span>Reach the safehouse. Six levels, one star harder each time.</span></div></div>
+    <div class="step"><div class="n">3</div><div><b>Get paid every 10 minutes</b><span>Your best run in each 10-minute round counts. When the timer hits zero, 80% of creator fees are shared between drivers holding <span id="minHold" class="hl">500K</span> $FAILED. More stars, bigger cut. Then a new round starts.</span></div></div>
+  </div>
+
+  <div class="pts">
+    <div class="ptsHead">The higher you get, the bigger your cut</div>
+    <b>★ 1 pt</b><b>★★ 2</b><b>★★★ 4</b><b>★★★★ 8</b><b>★★★★★ 16</b><b class="gold">★★★★★★ 40</b>
+  </div>
+  <footer class="foot">Fan-made. Not affiliated with Rockstar Games.</footer>
+</section>
+
+<!-- ============ SETUP ============ -->
+<section id="setup" class="screen">
+  <div class="panel setupPanel">
+    <h2 class="pd">pick your driver</h2>
+    <div id="chars" class="chars"></div>
+    <div class="row"><div class="lab">Car</div><div id="colors" class="colors"></div></div>
+    <div class="row"><div class="lab">Name</div><input id="nameIn" maxlength="14" placeholder="Your name" autocomplete="off" spellcheck="false"></div>
+    <div class="payBox">
+      <div class="payHead">Get paid <span>(optional — anyone can play)</span></div>
+      <div class="payOpt">
+        <div class="payN">1</div>
+        <div class="payBody"><b>Type in your wallet address</b><input id="walletIn" maxlength="44" placeholder="Your Solana address" autocomplete="off" spellcheck="false">
+          <small>This address gets paid if it holds <b class="hold">500K</b> $FAILED when the round ends. Payouts only ever go here.</small></div>
+      </div>
+      <div class="payOr">or</div>
+      <div class="payOpt">
+        <div class="payN">2</div>
+        <div class="payBody"><b>Connect your wallet instead</b><button id="connectBtn" class="btn conn">Connect wallet</button><small>Same thing, if you'd rather do it this way. Nothing to sign.</small></div>
+      </div>
+      <div id="earnRow" class="earn"></div>
+    </div>
+    <div class="cta">
+      <button id="backBtn" class="btn ghost">Back</button>
+      <button id="startBtn" class="btn big">Start the getaway</button>
+    </div>
+    <p class="keys desk">Arrows or <kbd>W A S D</kbd> drive that way · Mouse: hold click and point · Drift: <kbd>Space</kbd> · <button id="howBtn2" class="lnk">How to play</button></p>
+  </div>
+</section>
+
+<!-- ============ GAME ============ -->
+<section id="game" class="screen">
+  <canvas id="view" tabindex="0"></canvas>
+  <div id="hint" class="hint"></div>
+  <div class="hud">
+    <div class="hudTL">
+      <div class="lvl pd" id="hLevel">level 1</div>
+      <div class="time" id="hTime">0:00</div>
+    </div>
+    <div class="hudTR">
+      <div id="hStars" class="stars"></div>
+      <div class="hudBtns"><button id="muteBtn" class="ic">🔊</button><button id="pauseBtn" class="ic">❚❚</button></div>
+    </div>
+    <div class="hudBL">
+      <canvas id="mini" width="150" height="150"></canvas>
+      <div class="bars"><div class="bar hp"><i id="hHp"></i></div><div class="bar bust"><i id="hBust"></i></div></div>
+    </div>
+    <div id="bustTxt" class="bustTxt pd">busted</div>
+  </div>
+  <div id="touch" class="touch">
+    <div id="stick" class="stick"><span class="ar u">▲</span><span class="ar d">▼</span><span class="ar l">◀</span><span class="ar r">▶</span><i id="knob"></i></div>
+    <div class="tr"><button data-k="16" class="gas">DRIFT</button></div>
+  </div>
+  <div id="banner" class="banner"><div class="pd big" id="banTitle">level cleared</div><div class="sub" id="banSub"></div></div>
+  <div id="pauseOv" class="pauseOv"><div class="panel"><h2 class="pd">paused</h2><div class="cta"><button id="resumeBtn" class="btn big">Resume</button><button id="quitBtn" class="btn ghost">Quit run</button></div></div></div>
+
+  <!-- the iconic screen -->
+  <div id="failOv" class="failOv">
+    <div class="band"><div class="pd failTitle" id="failTitle">mission failed</div><div class="failSub" id="failSub">You got busted.</div></div>
+    <div class="results" id="results">
+      <div class="resStats">
+        <div><span>Level reached</span><b id="rLevel">★</b></div>
+        <div><span>Time</span><b id="rTime">0:00</b></div>
+        <div><span>Leaderboard spot</span><b id="rRank">—</b></div>
+      </div>
+      <div class="resNote" id="rNote"></div>
+      <div class="cta">
+        <button id="retryBtn" class="btn big">Retry</button>
+        <button id="saveBtn" class="btn">Save screenshot</button>
+        <button id="shareBtn" class="btn x">Share on 𝕏</button>
+      </div>
+      <div class="cta small"><button id="menuBtn" class="btn ghost">Menu</button><button id="board2Btn" class="btn ghost">Leaderboard</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LEADERBOARD ============ -->
+<div id="boardOv" class="modal">
+  <div class="panel boardPanel">
+    <div class="boardHead"><h2 class="pd">leaderboard</h2><button class="ic close" data-close>✕</button></div>
+    <div class="tabs"><button class="tab on" data-scope="round">This round</button><button class="tab" data-scope="all">All time</button></div>
+    <div class="boardMeta" id="boardMeta"></div>
+    <div id="boardList" class="boardList"></div>
+  </div>
+</div>
+
+<div id="howOv" class="modal">
+  <div class="panel howPanel">
+    <div class="boardHead"><h2 class="pd">how to play</h2><button class="ic close" data-close>✕</button></div>
+    <div class="howGoal">
+      <div><b>The mission:</b> drive to the <span class="y">yellow safehouse ⌂</span>. Follow the yellow arrow on screen and the yellow dot on your map.</div>
+      <div><b>Don't stop near cops.</b> If a cop is on you and you're stopped, the blue/red bar fills — full bar = <span class="r">busted</span>.</div>
+      <div><b>Don't get rammed to bits.</b> The green bar is your health — empty = <span class="r">wasted</span>.</div>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl"><div class="ch">⌨ Keyboard</div><div><kbd>↑</kbd> drives up, <kbd>↓</kbd> down, <kbd>←</kbd> left, <kbd>→</kbd> right</div><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> work the same</div><div><kbd>Space</kbd> handbrake / drift</div></div>
+      <div class="ctrl"><div class="ch">🖱 Mouse</div><div><kbd>Hold left click</kbd> and point where you want to go</div><div><kbd>Right click</kbd> handbrake / drift</div></div>
+      <div class="ctrl"><div class="ch">📱 Phone</div><div>Push the <b>joystick</b> the way you want to go</div><div><b>DRIFT</b> for handbrake turns</div></div>
+    </div>
+    <div class="lvls">
+      <div><b>★</b> A couple of slow cops</div><div><b>★★</b> More cops, roadblocks</div><div><b>★★★</b> Faster cops, spike strips, SWAT</div>
+      <div><b>★★★★</b> The chopper's up — its spotlight busts you faster</div><div><b>★★★★★</b> Cops faster than you, a tank</div><div><b>★★★★★★</b> Everything. Almost nobody clears this.</div>
+    </div>
+    <div class="howTip">Tip: drift round corners and use the alleys and parks. Cops are dumb in tight spaces.</div>
+    <div class="cta"><button id="howPlay" class="btn big">Got it — play</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

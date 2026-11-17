@@ -1,0 +1,7 @@
+# Netlify settings for the Mission Failed website (only the public/ folder is published)
+[build]
+  publish = "public"
+  command = "echo 'static site, nothing to build'"
+
+[build.environment]
+  NODE_VERSION = "22"
