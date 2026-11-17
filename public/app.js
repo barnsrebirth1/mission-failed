@@ -60,16 +60,56 @@ const currentRound = () => Math.floor(Date.now() / ((CFG.ROUND_MINUTES || 10) * 
 loadState(); setInterval(loadState, 15000);
 
 // ---------- wallet ----------
-function provider() { return window.phantom?.solana || window.solflare || window.solana || null; }
 function setWalletBtn() { renderEarn(); }
 const validAddr = (a) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a || "");
 // "Connect" just reads your address to fill the box. Nothing to sign; pasting it works the same.
-async function connectWallet() {
-  const p = provider();
-  if (!p) return toast("No wallet extension found. Just paste your address instead");
-  try { const r = await p.connect(); setWallet((r?.publicKey || p.publicKey).toString()); toast("Address added"); }
-  catch (e) { toast("Not connected. You can paste your address instead"); }
+// ---- wallet picker: finds every Solana wallet installed (Wallet Standard + older injected ones) ----
+const stdWallets = [];
+try {
+  const register = (...ws) => { for (const w of ws) if (w && w.chains?.some((c) => c.startsWith("solana:")) && w.features?.["standard:connect"] && !stdWallets.some((x) => x.name === w.name)) stdWallets.push(w); };
+  window.addEventListener("wallet-standard:register-wallet", (e) => { try { e.detail({ register }); } catch {} });
+  window.dispatchEvent(new CustomEvent("wallet-standard:app-ready", { detail: { register } }));
+} catch {}
+function legacyWallets() {
+  const out = [], add = (name, p) => { if (p && p.connect && !out.some((x) => x.name === name)) out.push({ name, legacy: p }); };
+  add("Phantom", window.phantom?.solana); add("Solflare", window.solflare); add("Backpack", window.backpack);
+  add("OKX Wallet", window.okxwallet?.solana); add("Coinbase Wallet", window.coinbaseSolana); add("Trust Wallet", window.trustwallet?.solana);
+  if (!out.length) add("Browser wallet", window.solana);
+  return out;
 }
+function allWallets() {
+  const list = stdWallets.map((w) => ({ name: w.name, icon: w.icon, std: w }));
+  for (const l of legacyWallets()) if (!list.some((x) => x.name.toLowerCase().startsWith(l.name.toLowerCase().split(" ")[0]))) list.push(l);
+  return list;
+}
+async function connectWith(w) {
+  try {
+    let addr = null;
+    if (w.std) { const r = await w.std.features["standard:connect"].connect(); addr = (r?.accounts || w.std.accounts)?.[0]?.address; }
+    else { const r = await w.legacy.connect(); addr = (r?.publicKey || w.legacy.publicKey)?.toString(); }
+    if (!validAddr(addr)) throw new Error("No Solana address came back");
+    setWallet(addr); closeWalletPicker(); toast(`${w.name} connected`);
+  } catch (e) { toast(e?.message?.includes("rejected") ? "Connection cancelled" : "Couldn't connect. You can paste your address instead"); }
+}
+const MOBILE = /Android|iPhone|iPad/i.test(navigator.userAgent);
+function openWalletPicker() {
+  const list = allWallets(), here = encodeURIComponent(location.href), origin = encodeURIComponent(location.origin);
+  const box = $("walletList");
+  let html = "";
+  if (list.length) html += list.map((w, i) => `<button class="wopt" data-i="${i}">${w.icon ? `<img src="${esc(w.icon)}" alt="">` : `<span class="wini">${esc(w.name[0])}</span>`}<b>${esc(w.name)}</b><span>Detected</span></button>`).join("");
+  if (MOBILE) {
+    html += `<div class="wsub">${list.length ? "Or open this site in your wallet app:" : "Open this site inside your wallet app:"}</div>`;
+    html += [["Phantom", `https://phantom.app/ul/browse/${here}?ref=${origin}`], ["Solflare", `https://solflare.com/ul/v1/browse/${here}?ref=${origin}`], ["MetaMask", `https://metamask.app.link/dapp/${location.host}${location.pathname}`], ["OKX Wallet", `okx://wallet/dapp/url?dappUrl=${here}`]]
+      .map(([n, u]) => `<a class="wopt" href="${u}"><span class="wini">${n[0]}</span><b>${n}</b><span>Open app</span></a>`).join("");
+  } else if (!list.length) {
+    html += `<div class="wsub">No wallet extension found in this browser. Install Phantom, Solflare, Backpack or MetaMask, or just paste your address — it works exactly the same.</div>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll("button.wopt").forEach((b) => (b.onclick = () => connectWith(list[+b.dataset.i])));
+  $("walletOv").classList.add("show");
+}
+function closeWalletPicker() { $("walletOv").classList.remove("show"); }
+async function connectWallet() { openWalletPicker(); }
 function setWallet(a) {
   me.wallet = validAddr(a) ? a : null; store.set("wallet", me.wallet);
   const w = document.getElementById("walletIn"); if (w && w.value !== (me.wallet || "")) w.value = me.wallet || "";
@@ -129,6 +169,8 @@ function startCarPreview() {
 $("playBtn").onclick = () => { sfx.init(); buildSetup(); show("setup"); setTimeout(() => !me.name && $("nameIn").focus(), 50); };
 $("backBtn").onclick = () => show("title");
 $("connectBtn").onclick = connectWallet;
+$("walletOv").querySelector("[data-close]").onclick = closeWalletPicker;
+$("walletOv").onclick = (e) => { if (e.target.id === "walletOv") closeWalletPicker(); };
 $("walletIn").oninput = (e) => { const v = e.target.value.trim(); e.target.classList.toggle("bad", !!v && !validAddr(v)); if (!v || validAddr(v)) setWallet(v); };
 $("nameIn").oninput = (e) => { me.name = e.target.value.replace(/[^\w .\-$]/g, "").slice(0, 14); };
 $("startBtn").onclick = () => {

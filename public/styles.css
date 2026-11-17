@@ -224,6 +224,18 @@ kbd { background: rgba(255,255,255,.08); border: 1px solid var(--line2); border-
 .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 20px); background: #000; border: 1px solid var(--line2); padding: 11px 16px; border-radius: 12px; font-weight: 600; font-size: 14px; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* wallet picker */
+.walletPanel { width: min(440px, 100%); }
+.walletPanel h2 { font-size: clamp(26px, 7vw, 36px); padding: 0 40px; margin: 0 0 6px; color: #fff; text-shadow: 3px 3px 0 #000; text-align: center; }
+.wnote { text-align: center; color: var(--dim); font-size: 13.5px; margin: 0 0 14px; line-height: 1.45; }
+.walletList { display: grid; gap: 8px; }
+.wopt { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 13px; background: rgba(255,255,255,.05); border: 1px solid var(--line2); text-align: left; text-decoration: none; color: var(--text); transition: background .15s, border-color .15s; }
+.wopt:hover { background: rgba(255,255,255,.1); border-color: rgba(227,38,43,.6); }
+.wopt img, .wini { width: 40px; height: 40px; border-radius: 10px; }
+.wini { display: grid; place-items: center; background: rgba(227,38,43,.18); border: 1px solid rgba(227,38,43,.5); font-weight: 800; font-size: 18px; }
+.wopt b { font-size: 15.5px; } .wopt span:last-child { color: var(--dim); font-size: 12.5px; }
+.wsub { color: var(--dim); font-size: 13px; margin: 8px 2px 2px; line-height: 1.45; }
+
 /* ---------- loading intro ---------- */
 .intro { position: fixed; inset: 0; z-index: 50; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity .6s ease, visibility .6s; cursor: pointer; }
 .intro.out { opacity: 0; visibility: hidden; }

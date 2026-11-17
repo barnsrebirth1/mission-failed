@@ -85,7 +85,7 @@
       <div class="payOr">or</div>
       <div class="payOpt">
         <div class="payN">2</div>
-        <div class="payBody"><b>Connect your wallet instead</b><button id="connectBtn" class="btn conn">Connect wallet</button><small>Same thing, if you'd rather do it this way. Nothing to sign.</small></div>
+        <div class="payBody"><b>Connect your wallet instead</b><button id="connectBtn" class="btn conn">Connect wallet</button><small>Phantom, Solflare, Backpack, MetaMask, OKX and more. Nothing to sign.</small></div>
       </div>
       <div id="earnRow" class="earn"></div>
     </div>
@@ -174,6 +174,13 @@
   </div>
 </div>
 
+<div id="walletOv" class="modal">
+  <div class="panel walletPanel">
+    <div class="boardHead"><h2 class="pd">connect wallet</h2><button class="ic close" data-close>✕</button></div>
+    <p class="wnote">Only your address is read so payouts can reach you. Nothing to sign, nothing to approve.</p>
+    <div id="walletList" class="walletList"></div>
+  </div>
+</div>
 <div id="toast" class="toast"></div>
 <audio id="music" src="assets/music.mp3" loop preload="none"></audio>
 <script src="config.js"></script>
