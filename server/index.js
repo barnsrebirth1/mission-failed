@@ -174,5 +174,11 @@ app.get("/api/admin/test-round", wrap(async (req, res) => {
     total_points: total, payouts: pays.map((p) => ({ name: p.name, wallet: p.owner, sol: p.lamports / LAMPORTS_PER_SOL, sig: p.sig || null, failed: !!p.failed })), sent: req.query.send === "1", sigs });
 }));
 
-app.get("/", (req, res) => res.send("Mission Failed server is running."));
+// The website itself (public/) is served from here too, so there's no separate host to pay for.
+const PUBLIC_DIR = new URL("../public/", import.meta.url).pathname;
+app.use(express.static(PUBLIC_DIR, {
+  extensions: ["html"],
+  setHeaders: (res, path) => res.setHeader("Cache-Control", /\.(html|js|css)$/.test(path) ? "no-cache" : "public, max-age=604800"),
+}));
+app.get("/health", (req, res) => res.send("Mission Failed server is running."));
 app.listen(ENV.PORT, () => { console.log("Mission Failed server on :" + ENV.PORT); startRoundLoop(); });
