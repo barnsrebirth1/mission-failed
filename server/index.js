@@ -158,7 +158,8 @@ app.get("/api/admin/test-round", wrap(async (req, res) => {
   const { holderSnapshot, payMany } = await import("./lib/chain.js");
   const { splitPool } = await import("./lib/rounds.js");
   const t = treasuryKeypair();
-  if (!t || !connection) throw new Error("treasury key or RPC missing");
+  if (!connection) throw new Error("RPC missing");
+  if (req.query.send === "1" && !t) throw new Error("TREASURY_PRIVATE_KEY isn't loaded yet, so nothing can be paid. The check without &send=1 still works.");
   const mint = String(req.query.mint || ENV.FAILED_MINT || "");
   if (!mint) throw new Error("add &mint=<any coin CA you hold>");
   const pool = Math.min(Math.round(Number(req.query.sol || 0.002) * LAMPORTS_PER_SOL), 0.01 * LAMPORTS_PER_SOL);
