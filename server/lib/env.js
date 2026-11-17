@@ -34,6 +34,15 @@ export const ENV = {
   MAX_STARTS_PER_MIN: num("MAX_STARTS_PER_MIN", 20),
 };
 
+// Safe description of the key for the admin page: never the key itself.
+export function treasuryKeyInfo() {
+  const raw = clean("TREASURY_PRIVATE_KEY");
+  const names = Object.keys(process.env).filter((k) => /TREASURY|PRIVATE/i.test(k));
+  const info = { variable_names_found: names, present: !!raw, length: raw.length, looks_like: !raw ? "empty" : raw.startsWith("[") ? "number list" : raw.trim().split(/\s+/).length >= 12 ? "RECOVERY PHRASE (wrong: needs the private key)" : /^[1-9A-HJ-NP-Za-km-z]+$/.test(raw) ? "base58 key" : "has characters a private key can't have" };
+  if (raw) { try { (raw.startsWith("[") ? Keypair.fromSecretKey(Uint8Array.from(JSON.parse(raw))) : Keypair.fromSecretKey(bs58.decode(raw))); info.ok = true; } catch (e) { info.ok = false; info.error = e.message; } }
+  return info;
+}
+
 export function treasuryKeypair() {
   const raw = clean("TREASURY_PRIVATE_KEY");
   if (!raw) return null;

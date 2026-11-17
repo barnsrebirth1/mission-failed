@@ -4,7 +4,7 @@ import { randomUUID, randomBytes, createHmac, timingSafeEqual } from "crypto";
 import nacl from "tweetnacl";
 import bs58 from "bs58";
 import { PublicKey } from "@solana/web3.js";
-import { ENV, SESSION_SECRET, treasuryKeypair, checkEnv } from "./lib/env.js";
+import { ENV, SESSION_SECRET, treasuryKeypair, treasuryKeyInfo, checkEnv } from "./lib/env.js";
 import * as DB from "./lib/db.js";
 import { connection, vaultBalance, tokenBalance, solBalance, LAMPORTS_PER_SOL, TOKEN_DECIMALS } from "./lib/chain.js";
 import { roundOf, roundEnds, roundPoints, runRound, startRoundLoop } from "./lib/rounds.js";
@@ -145,7 +145,7 @@ app.get("/api/admin/status", wrap(async (req, res) => {
   admin(req);
   const t = treasuryKeypair();
   res.json({ setup: { database: !!DB.db, rpc: !!connection, treasuryKey: !!t, mint: !!ENV.FAILED_MINT, dryRun: ENV.DRY_RUN, payouts: ENV.PAYOUTS_ENABLED },
-    treasury: t?.publicKey.toBase58() || null, treasury_sol: t && connection ? (await solBalance(t.publicKey)) / LAMPORTS_PER_SOL : null,
+    treasury: t?.publicKey.toBase58() || null, treasury_key_check: treasuryKeyInfo(), treasury_sol: t && connection ? (await solBalance(t.publicKey)) / LAMPORTS_PER_SOL : null,
     round: roundOf(), last_round: await DB.lastRound().catch(() => null), pool_estimate_sol: (await poolEstimate().catch(() => 0)) / LAMPORTS_PER_SOL });
 }));
 app.get("/api/admin/run-round", wrap(async (req, res) => { admin(req); res.json(await runRound(req.query.round ? Number(req.query.round) : roundOf(), { force: true })); }));
