@@ -21,19 +21,20 @@
 
 <!-- ============ TITLE ============ -->
 <section id="title" class="screen show">
-  <div class="sky"></div>
   <header class="top">
-    <div class="brand"><span class="pd">mission failed</span><span class="tick">$FAILED</span></div>
+    <div class="brand"><img src="assets/icon.png" alt=""><span class="pd">mission failed</span><span class="tick">$FAILED</span></div>
     <div class="topr">
-      <a id="xlink" class="chip" target="_blank" rel="noopener">𝕏</a>
+      <button id="musicBtn" class="chip" aria-label="Music">♪ <span>Music</span></button>
+      <a id="xlink" class="chip" target="_blank" rel="noopener" aria-label="X">𝕏</a>
     </div>
   </header>
 
   <div class="hero">
-    <h1 class="pd logo">mission<br>failed</h1>
+    <div class="heroArt"><picture><source media="(max-width: 640px)" srcset="assets/hero-square.jpg"><img src="assets/hero-wide.jpg" alt="Mission Failed: six stars, most get busted, the best getaways get paid"></picture></div>
+    <h1 class="sr">Mission Failed</h1>
     <p class="tag">GTA 6 drops Thursday. Your getaway starts now.<br><b>Escape the cops. Get paid every 10 minutes.</b></p>
     <div class="cta">
-      <button id="playBtn" class="btn big">Play</button>
+      <button id="playBtn" class="btn big">Play now</button>
       <button id="howBtn" class="btn ghost">How to play</button>
       <button id="boardBtn" class="btn ghost">Leaderboard</button>
     </div>
@@ -41,7 +42,7 @@
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="k">Next payout</div><div class="v" id="sTimer">5:00</div></div>
+    <div class="stat live"><div class="k"><i class="dot"></i>Round ends in</div><div class="v" id="sTimer">10:00</div></div>
     <div class="stat"><div class="k">Prize pool</div><div class="v" id="sPool">0.000 SOL</div></div>
     <div class="stat"><div class="k">Paid to players</div><div class="v" id="sPaid">0.000 SOL</div></div>
     <div class="stat"><div class="k">Drivers this round</div><div class="v" id="sPlayers">0</div></div>
@@ -63,6 +64,13 @@
 <!-- ============ SETUP ============ -->
 <section id="setup" class="screen">
   <div class="panel setupPanel">
+    <div class="setupGrid">
+    <div class="preview">
+      <canvas id="bigPortrait" width="440" height="440"></canvas>
+      <div class="pvName pd" id="pvName">mari</div>
+      <canvas id="carPrev" width="440" height="200"></canvas>
+    </div>
+    <div class="opts">
     <h2 class="pd">pick your driver</h2>
     <div id="chars" class="chars"></div>
     <div class="row"><div class="lab">Car</div><div id="colors" class="colors"></div></div>
@@ -85,6 +93,7 @@
       <button id="backBtn" class="btn ghost">Back</button>
       <button id="startBtn" class="btn big">Start the getaway</button>
     </div>
+    </div></div>
     <p class="keys desk">Arrows or <kbd>W A S D</kbd> drive that way · Mouse: hold click and point · Drift: <kbd>Space</kbd> · <button id="howBtn2" class="lnk">How to play</button></p>
   </div>
 </section>
@@ -94,17 +103,15 @@
   <canvas id="view" tabindex="0"></canvas>
   <div id="hint" class="hint"></div>
   <div class="hud">
-    <div class="hudTL">
+    <div class="hudTL"><div class="hudBtns"><button id="pauseBtn" class="ic" aria-label="Pause">❚❚</button><button id="muteBtn" class="ic" aria-label="Sound">🔊</button></div></div>
+    <div class="hudTR">
+      <div id="hStars" class="stars"></div>
       <div class="lvl pd" id="hLevel">level 1</div>
       <div class="time" id="hTime">0:00</div>
     </div>
-    <div class="hudTR">
-      <div id="hStars" class="stars"></div>
-      <div class="hudBtns"><button id="muteBtn" class="ic">🔊</button><button id="pauseBtn" class="ic">❚❚</button></div>
-    </div>
     <div class="hudBL">
-      <canvas id="mini" width="150" height="150"></canvas>
-      <div class="bars"><div class="bar hp"><i id="hHp"></i></div><div class="bar bust"><i id="hBust"></i></div></div>
+      <canvas id="mini" width="360" height="240"></canvas>
+      <div class="bars"><div class="bar hp" title="Health"><i id="hHp"></i></div><div class="bar bust" title="Busted meter"><i id="hBust"></i></div></div>
     </div>
     <div id="bustTxt" class="bustTxt pd">busted</div>
   </div>
@@ -168,6 +175,7 @@
 </div>
 
 <div id="toast" class="toast"></div>
+<audio id="music" src="assets/music.mp3" loop preload="none"></audio>
 <script src="config.js"></script>
 <script type="module" src="app.js"></script>
 </body>

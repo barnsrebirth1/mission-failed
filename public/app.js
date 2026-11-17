@@ -1,9 +1,9 @@
 import * as G from "./game/sim.js";
-import { Renderer, CHARACTERS, CAR_COLORS, drawPortrait } from "./game/render.js";
+import { Renderer, CHARACTERS, CAR_COLORS, drawPortrait, drawCarSprite } from "./game/render.js";
 import { Sound } from "./game/audio.js";
 
 const CFG = window.MF_CONFIG || {};
-const DEMO = !CFG.SERVER_URL;
+const DEMO = !CFG.SERVER_URL || /^(localhost|127\.)/.test(location.hostname);
 const $ = (id) => document.getElementById(id);
 const sfx = new Sound();
 const store = { get(k, d) { try { const v = localStorage.getItem("mf_" + k); return v === null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem("mf_" + k, JSON.stringify(v)); } catch {} } };
@@ -104,7 +104,27 @@ function buildSetup() {
   });
   $("nameIn").value = me.name;
   $("walletIn").value = me.wallet || "";
+  const bp = $("bigPortrait"); drawPortrait(bp.getContext("2d"), CHARACTERS[me.char], 0, 0, bp.width);
+  $("pvName").textContent = CHARACTERS[me.char].name.toLowerCase();
+  setTimeout(startCarPreview, 0);
   renderEarn();
+}
+let carPrevRaf = 0;
+function startCarPreview() {
+  cancelAnimationFrame(carPrevRaf);
+  const c = $("carPrev"), g = c.getContext("2d"); let a = -0.4;
+  const f = () => {
+    if (!$("setup").classList.contains("show")) return;
+    carPrevRaf = requestAnimationFrame(f);
+    g.clearRect(0, 0, c.width, c.height);
+    // road strip
+    g.fillStyle = "#1c1c24"; g.fillRect(0, c.height * 0.2, c.width, c.height * 0.6);
+    g.strokeStyle = "rgba(255,214,102,.5)"; g.setLineDash([22, 18]); g.lineWidth = 3; g.lineDashOffset = -a * 60;
+    g.beginPath(); g.moveTo(0, c.height / 2); g.lineTo(c.width, c.height / 2); g.stroke(); g.setLineDash([]);
+    a += 0.012;
+    drawCarSprite(g, c.width / 2, c.height / 2, Math.sin(a) * 0.35, CAR_COLORS[me.color], 3.6);
+  };
+  f();
 }
 $("playBtn").onclick = () => { sfx.init(); buildSetup(); show("setup"); setTimeout(() => !me.name && $("nameIn").focus(), 50); };
 $("backBtn").onclick = () => show("title");
@@ -228,7 +248,7 @@ $("resumeBtn").onclick = () => togglePause(false);
 $("quitBtn").onclick = () => { togglePause(false); finish("quit"); };
 let muted = store.get("muted", false);
 $("muteBtn").textContent = muted ? "🔇" : "🔊"; sfx.setMuted(muted);
-$("muteBtn").onclick = () => { muted = !muted; store.set("muted", muted); sfx.setMuted(muted); $("muteBtn").textContent = muted ? "🔇" : "🔊"; };
+$("muteBtn").onclick = () => { muted = !muted; store.set("muted", muted); sfx.setMuted(muted); $("muteBtn").textContent = muted ? "🔇" : "🔊"; if (typeof applyMusic === "function") applyMusic(); };
 document.addEventListener("visibilitychange", () => { if (document.hidden && run && !run.done) togglePause(true); });
 
 function loop(now) {
@@ -470,6 +490,7 @@ function autopilot(s, mem) {
   return inp;
 }
 function bgStart() {
+  if (matchMedia("(hover: none)").matches) return; // phones: static background (saves battery and stops scroll lag)
   BR.resize(); bg = { s: G.createRun((Math.random() * 2 ** 32) >>> 0), mem: {}, wait: 0 }; BR.map = null; BR.carColor = CAR_COLORS[me.color];
   cancelAnimationFrame(bgRaf);
   const f = () => {
@@ -505,3 +526,19 @@ function zapHostBadges() {
 }
 new MutationObserver(zapHostBadges).observe(document.body, { childList: true });
 zapHostBadges();
+
+// ---------- background music (original track), starts after the first tap/click ----------
+const music = $("music");
+let musicOn = store.get("musicOn", true);
+function setMusicBtn() { $("musicBtn").classList.toggle("on", musicOn); $("musicBtn").querySelector("span").textContent = musicOn ? "Music on" : "Music off"; }
+function musicLevel() { return run && !run.done ? 0.14 : 0.32; }
+function applyMusic() {
+  music.volume = musicLevel();
+  if (musicOn && !muted) { music.play().catch(() => {}); } else music.pause();
+}
+setMusicBtn();
+$("musicBtn").onclick = (e) => { e.stopPropagation(); musicOn = !musicOn; store.set("musicOn", musicOn); setMusicBtn(); applyMusic(); };
+const firstGesture = () => { removeEventListener("pointerdown", firstGesture); removeEventListener("keydown", firstGesture); applyMusic(); };
+addEventListener("pointerdown", firstGesture); addEventListener("keydown", firstGesture);
+setInterval(() => { if (!music.paused) music.volume += (musicLevel() - music.volume) * 0.3; }, 250);
+document.addEventListener("visibilitychange", () => { if (document.hidden) music.pause(); else applyMusic(); });
