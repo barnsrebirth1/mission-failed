@@ -79,6 +79,16 @@ kbd { background: rgba(255,255,255,.08); border: 1px solid var(--line2); border-
 .pts b.gold { color: #fff; border-color: rgba(227,38,43,.7); background: rgba(227,38,43,.2); box-shadow: 0 0 20px rgba(227,38,43,.25); }
 .foot { text-align: center; color: rgba(255,255,255,.28); font-size: 12px; margin-top: 34px; }
 
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: 10px; width: 100%; margin: 6px 0 2px; }
+.pod { width: 118px; border-radius: 14px 14px 6px 6px; background: var(--panel); border: 1px solid var(--line2); display: grid; justify-items: center; align-content: center; gap: 2px; }
+.pod .pl { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .14em; font-weight: 800; }
+.pod b { font-family: Pricedown, Impact, sans-serif; font-weight: 400; font-size: 38px; background: none; border: 0; padding: 0; }
+.pod.p1 { height: 128px; border-color: rgba(227,38,43,.8); background: linear-gradient(180deg, rgba(227,38,43,.28), var(--panel)); box-shadow: 0 0 30px rgba(227,38,43,.25); }
+.pod.p1 b { font-size: 48px; }
+.pod.p2 { height: 100px; } .pod.p3 { height: 84px; }
+.ptsNote { width: 100%; text-align: center; color: var(--dim); font-size: 13.5px; margin-top: 4px; }
+.lb .pay { font-size: 11px; font-weight: 800; color: #fff; background: rgba(227,38,43,.25); border: 1px solid rgba(227,38,43,.6); border-radius: 6px; padding: 2px 6px; margin-left: 8px; }
+
 /* ---------- panels / setup ---------- */
 .panel { background: var(--panel); border: 1px solid var(--line2); border-radius: 22px; padding: 24px; backdrop-filter: blur(14px); box-shadow: var(--shadow); }
 #setup { display: none; place-items: center; padding: 20px; background: radial-gradient(ellipse at 30% 20%, rgba(227,38,43,.12), transparent 60%), rgba(6,6,9,.7); }

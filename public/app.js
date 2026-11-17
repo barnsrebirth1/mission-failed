@@ -368,7 +368,7 @@ async function finish(kind) {
   $("rLevel").textContent = s.cleared ? stars(s.cleared) : "—";
   $("rTime").textContent = fmtT(clearTicks || s.totalTicks);
   $("rRank").textContent = "…";
-  $("rNote").innerHTML = s.cleared ? `You cleared <b>${stars(s.cleared)}</b> — that's <b>${G.POINTS[s.cleared]} point${G.POINTS[s.cleared] > 1 ? "s" : ""}</b> this round.` : "Clear at least one level to score points this round.";
+  $("rNote").innerHTML = s.cleared ? `You cleared <b>${stars(s.cleared)}</b>. Finish the round in the <b>top 3</b> to get paid.` : "Clear at least one level to get on this round's leaderboard.";
   setTimeout(() => $("results").classList.add("show"), passed ? 1100 : 1900);
   await submit();
 }
@@ -381,7 +381,7 @@ async function submit() {
     const list = rankList(localBoard.filter((e) => e.round === entry.round));
     const i = list.findIndex((e) => e === entry);
     $("rRank").textContent = r.cleared ? "#" + (i + 1) : "—";
-    if (DEMO && r.cleared) $("rNote").innerHTML += `<br>Payouts switch on at launch.`;
+    if (DEMO && r.cleared) $("rNote").innerHTML = i < 3 ? `You're <b>#${i + 1}</b> this round. Top 3 get paid (payouts switch on at launch).` : `You're #${i + 1}. Get into the <b>top 3</b> to get paid.`;
     loadState();
     return;
   }
@@ -389,10 +389,11 @@ async function submit() {
     const res = await api("/api/run/finish", { runId: run.runId, inputs: G.encodeInputs(run.inputs) });
     $("rRank").textContent = res.rank ? "#" + res.rank : "—";
     if (res.cleared) {
-      let note = `Verified: <b>${stars(res.cleared)}</b> = <b>${res.points} pts</b> this round.`;
-      if (!res.wallet) note += ` Add your wallet address on the driver screen to earn from it.`;
+      const top = res.rank && res.rank <= 3;
+      let note = top ? `You're <b>#${res.rank}</b> this round. Hold that spot until the timer hits zero.` : `Verified <b>${stars(res.cleared)}</b>. You're #${res.rank || "—"}. Get into the <b>top 3</b> to get paid.`;
+      if (!res.wallet) note += ` Add your wallet address on the driver screen so you can get paid.`;
       else if (res.eligible === false) note += ` Hold ${$("minHold").textContent} $FAILED by the end of the round to get paid.`;
-      else if (res.estimate_sol) note += ` Est. payout <b>${res.estimate_sol.toFixed(4)} SOL</b>.`;
+      else if (res.estimate_sol) note += ` Right now that's about <b>${res.estimate_sol.toFixed(4)} SOL</b>.`;
       $("rNote").innerHTML = note;
     }
     loadState();
@@ -406,7 +407,7 @@ $("shareBtn").onclick = async () => {
   const r = lastResult, c = makeCard();
   const what = r.passed ? "Escaped all 6 stars in Mission Failed 🚔" : `${r.reason === "WASTED" ? "Wasted" : "Busted"} on ${stars(r.reachedLevel)} in Mission Failed 🚔`;
   const cleared = r.cleared ? `Cleared ${stars(r.cleared)} in ${fmtT(r.clearTicks)}.` : "Didn't even make the safehouse.";
-  const text = `${what}\n${cleared} What did you get? Drop your level below 👇\n\n${(CFG.SITE_URL || location.origin).replace(/^https?:\/\//, "")}\n${CFG.TICKER || "$FAILED"}${CFG.CA ? "\nCA: " + CFG.CA : ""}`;
+  const text = `${what}\n${cleared} Every 10 minutes the top 3 get paid. What did you get? 👇\n\n${(CFG.SITE_URL || location.origin).replace(/^https?:\/\//, "")}\n${CFG.TICKER || "$FAILED"}${CFG.CA ? "\nCA: " + CFG.CA : ""}`;
   try {
     const blob = await new Promise((res) => c.toBlob(res, "image/png"));
     const file = new File([blob], "mission-failed.png", { type: "image/png" });
@@ -496,12 +497,12 @@ async function openBoard() {
     list = rankList([...(boardScope === "round" ? localBoard.filter((e) => e.round === currentRound()) : localBoard), ...EXAMPLES]);
     meta = "Preview only: example drivers so you can see the layout. The real board starts empty at launch.";
   } else {
-    try { const r = await api("/api/leaderboard?scope=" + boardScope); list = r.rows; meta = boardScope === "round" ? `Round ends in ${$("sTimer").textContent} · ${r.players || 0} playing · pool ${(serverState?.pool_sol || 0).toFixed(3)} SOL` : "Best getaway per driver, all time"; }
+    try { const r = await api("/api/leaderboard?scope=" + boardScope); list = r.rows; meta = boardScope === "round" ? `Round ends in ${$("sTimer").textContent} · top 3 split ${(serverState?.pool_sol || 0).toFixed(3)} SOL · ${r.players || 0} playing` : "Best getaway per driver, all time"; }
     catch (e) { meta = e.message; }
   }
   $("boardMeta").textContent = meta; $("boardMeta").classList.toggle("note", DEMO);
   if (!list.length) { $("boardList").innerHTML = `<div class="empty">Nobody's cleared a level yet. Be the first.</div>`; return; }
-  $("boardList").innerHTML = list.slice(0, 100).map((e, i) => `<div class="lb${(me.wallet && e.wallet === me.wallet) || (!e.wallet && e.name === me.name) ? " me" : ""}"><div class="r">${i + 1}</div><img class="av" src="${avatar(e.char)}" alt=""><div class="nm">${esc(e.name)}${e.wallet ? `<small>${short(e.wallet)}</small>` : ""}</div><div class="st">${stars(e.cleared)}</div><div class="tm">${fmtT(e.clearTicks)}</div></div>`).join("");
+  $("boardList").innerHTML = list.slice(0, 100).map((e, i) => `<div class="lb${(me.wallet && e.wallet === me.wallet) || (!e.wallet && e.name === me.name) ? " me" : ""}"><div class="r">${i + 1}</div><img class="av" src="${avatar(e.char)}" alt=""><div class="nm">${esc(e.name)}${boardScope === "round" && i < 3 ? `<span class="pay">${[50, 30, 20][i]}%</span>` : ""}${e.wallet ? `<small>${short(e.wallet)}</small>` : ""}</div><div class="st">${stars(e.cleared)}</div><div class="tm">${fmtT(e.clearTicks)}</div></div>`).join("");
 }
 const openHow = () => $("howOv").classList.add("show");
 $("howBtn").onclick = openHow; $("howBtn2").onclick = openHow;

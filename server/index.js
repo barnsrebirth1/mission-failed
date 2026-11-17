@@ -93,10 +93,13 @@ app.post("/api/run/finish", wrap(async (req, res) => {
       const bal = await tokenBalance(run.wallet, ENV.FAILED_MINT);
       out.eligible = bal >= BigInt(ENV.MIN_HOLD) * 10n ** BigInt(TOKEN_DECIMALS);
       if (out.eligible) {
-        const pts = await roundPoints(round), total = pts.reduce((a, p) => a + p.points, 0);
-        const mine = pts.find((p) => p.wallet === run.wallet)?.points || 0;
-        const pool = await poolEstimate();
-        if (total) out.estimate_sol = (pool * mine) / total / LAMPORTS_PER_SOL;
+        const { SPLIT } = await import("./lib/rounds.js");
+        const pts = await roundPoints(round), place = pts.findIndex((p) => p.wallet === run.wallet) + 1;
+        out.place = place;
+        if (place >= 1 && place <= SPLIT.length) {
+          const n = Math.min(SPLIT.length, pts.length), total = SPLIT.slice(0, n).reduce((a, b) => a + b, 0);
+          out.estimate_sol = (await poolEstimate()) * SPLIT[place - 1] / total / LAMPORTS_PER_SOL;
+        }
       }
     } catch {}
   }
@@ -133,7 +136,7 @@ app.get("/api/state", wrap(async (req, res) => {
   if (stateCache.v && Date.now() - stateCache.at < 5000) return res.json({ ...stateCache.v, now: Date.now() });
   const round = roundOf();
   const [pool, paid, players, recent] = await Promise.all([poolEstimate().catch(() => 0), DB.paidTotalLamports().catch(() => 0), DB.playersInRound(round).catch(() => 0), DB.recentPayouts(12).catch(() => [])]);
-  const v = { round: { id: round, endsAt: roundEnds(round) }, pool_sol: pool / LAMPORTS_PER_SOL, paid_total_sol: paid / LAMPORTS_PER_SOL, players_round: players, ca: ENV.FAILED_MINT,
+  const v = { round: { id: round, endsAt: roundEnds(round) }, split: [50, 30, 20], pool_sol: pool / LAMPORTS_PER_SOL, paid_total_sol: paid / LAMPORTS_PER_SOL, players_round: players, ca: ENV.FAILED_MINT,
     min_hold: ENV.MIN_HOLD, points: POINTS, recent: recent.map((p) => ({ name: p.name, wallet: p.wallet, sol: Number(p.lamports) / LAMPORTS_PER_SOL, round: p.round, sig: p.sig, dry_run: p.dry_run })) };
   stateCache = { at: Date.now(), v };
   res.json({ ...v, now: Date.now() });
@@ -171,7 +174,7 @@ app.get("/api/admin/test-round", wrap(async (req, res) => {
   let sigs = [];
   if (req.query.send === "1" && pays.length) sigs = await payMany(t, pays);
   res.json({ round, mint, test_pool_sol: pool / LAMPORTS_PER_SOL, min_hold: minHold, players: players.map((p) => ({ name: p.name, wallet: p.wallet, cleared: p.cleared, points: p.points, holds: String((holders.get(p.wallet) || 0n) / 10n ** BigInt(TOKEN_DECIMALS)) })),
-    total_points: total, payouts: pays.map((p) => ({ name: p.name, wallet: p.owner, sol: p.lamports / LAMPORTS_PER_SOL, sig: p.sig || null, failed: !!p.failed })), sent: req.query.send === "1", sigs });
+    split_total: total, payouts: pays.map((p) => ({ place: p.place, name: p.name, wallet: p.owner, share_pct: p.points, sol: p.lamports / LAMPORTS_PER_SOL, sig: p.sig || null, failed: !!p.failed })), sent: req.query.send === "1", sigs });
 }));
 
 // The website itself (public/) is served from here too, so there's no separate host to pay for.
