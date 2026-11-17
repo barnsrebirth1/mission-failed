@@ -38,7 +38,7 @@ export const ENV = {
 export function treasuryKeyInfo() {
   const raw = clean("TREASURY_PRIVATE_KEY");
   const names = Object.keys(process.env).filter((k) => /TREASURY|PRIVATE/i.test(k));
-  const info = { variable_names_found: names, present: !!raw, length: raw.length, looks_like: !raw ? "empty" : raw.startsWith("[") ? "number list" : raw.trim().split(/\s+/).length >= 12 ? "RECOVERY PHRASE (wrong: needs the private key)" : /^[1-9A-HJ-NP-Za-km-z]+$/.test(raw) ? "base58 key" : "has characters a private key can't have" };
+  const rawv = process.env.TREASURY_PRIVATE_KEY || ""; const info = { variable_names_found: names, raw_length: rawv.length, raw_first_char_code: rawv.length ? rawv.charCodeAt(0) : null, raw_starts_with_dollar: rawv.startsWith("$"), present: !!raw, length: raw.length, looks_like: !raw ? "empty" : raw.startsWith("[") ? "number list" : raw.trim().split(/\s+/).length >= 12 ? "RECOVERY PHRASE (wrong: needs the private key)" : /^[1-9A-HJ-NP-Za-km-z]+$/.test(raw) ? "base58 key" : "has characters a private key can't have" };
   if (raw) { try { (raw.startsWith("[") ? Keypair.fromSecretKey(Uint8Array.from(JSON.parse(raw))) : Keypair.fromSecretKey(bs58.decode(raw))); info.ok = true; } catch (e) { info.ok = false; info.error = e.message; } }
   return info;
 }
