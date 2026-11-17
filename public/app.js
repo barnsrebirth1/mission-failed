@@ -493,3 +493,15 @@ document.fonts?.load("40px Pricedown").finally(() => bgStart());
   setTimeout(done, 2900);
 })();
 setWalletBtn();
+
+// remove any badge the host injects into the page
+function zapHostBadges() {
+  document.querySelectorAll("body > *").forEach((el) => {
+    if (el.closest("#title, #setup, #game, #boardOv, #howOv, #intro, #toast, #bg")) return;
+    const html = (el.outerHTML || "").slice(0, 400).toLowerCase();
+    const cs = getComputedStyle(el);
+    if ((cs.position === "fixed" || el.tagName.includes("-") || el.tagName === "IFRAME") && html.includes("netlify")) el.remove();
+  });
+}
+new MutationObserver(zapHostBadges).observe(document.body, { childList: true });
+zapHostBadges();
